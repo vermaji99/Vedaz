@@ -69,17 +69,27 @@ const ExpertList = () => {
   const dispatch = useDispatch();
   const { list: experts, loading, pagination, error } = useSelector((state) => state.experts);
   const [search, setSearch] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [category, setCategory] = useState('All');
   const [page, setPage] = useState(1);
 
+  // Debounce search input
   useEffect(() => {
-    dispatch(fetchExperts({ page, search, category }));
-  }, [dispatch, page, category]);
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search);
+      setPage(1); // Reset to first page on search
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [search]);
 
-  const handleSearch = (e) => {
-    e.preventDefault();
+  useEffect(() => {
+    dispatch(fetchExperts({ page, search: debouncedSearch, category }));
+  }, [dispatch, page, category, debouncedSearch]);
+
+  const handleClearFilters = () => {
+    setSearch('');
+    setCategory('All');
     setPage(1);
-    dispatch(fetchExperts({ page: 1, search, category }));
   };
 
   return (
@@ -105,7 +115,7 @@ const ExpertList = () => {
 
       {/* Filters & Search */}
       <div className="sticky top-20 md:top-24 z-30 bg-white/80 backdrop-blur-xl border border-gray-100 p-3 md:p-4 rounded-2xl md:rounded-3xl shadow-xl shadow-gray-200/50 flex flex-col md:flex-row gap-3 md:gap-4 items-center">
-        <form onSubmit={handleSearch} className="flex-1 w-full relative">
+        <div className="flex-1 w-full relative">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
           <input
             type="text"
@@ -114,7 +124,7 @@ const ExpertList = () => {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
-        </form>
+        </div>
         
         <div className="flex gap-2 overflow-x-auto w-full md:w-auto pb-1 no-scrollbar scroll-smooth">
           {categories.map((cat) => (
@@ -163,7 +173,14 @@ const ExpertList = () => {
                   <Filter className="h-10 w-10 text-gray-300" />
                 </div>
                 <h3 className="text-xl font-bold text-gray-900">No experts found</h3>
-                <p className="text-gray-500">Try adjusting your filters or search query.</p>
+                <p className="text-gray-500 mb-6">Try adjusting your filters or search query.</p>
+                <Button 
+                  variant="secondary" 
+                  onClick={handleClearFilters}
+                  className="rounded-xl"
+                >
+                  Clear All Filters
+                </Button>
               </motion.div>
             )}
           </AnimatePresence>
