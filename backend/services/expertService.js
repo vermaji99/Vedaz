@@ -12,7 +12,12 @@ class ExpertService {
       filter.category = category;
     }
     if (search) {
-      filter.name = { $regex: search, $options: 'i' };
+      filter.$or = [
+        { name: { $regex: search, $options: 'i' } },
+        { description: { $regex: search, $options: 'i' } },
+        { bio: { $regex: search, $options: 'i' } },
+        { expertise: { $regex: search, $options: 'i' } }
+      ];
     }
 
     const { experts, total } = await expertRepository.findAll({ 
